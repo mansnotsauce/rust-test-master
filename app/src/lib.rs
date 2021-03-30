@@ -99,12 +99,10 @@ fn view(model: &Model) -> Node<Msg> {
         ],
         ul![
             model.items.iter().map(|item| {
-                //let item_to_delete = item.to_string();
-                let index_to_delete = index;
-                let index_to_swap = index;
+                let row_index = index;
                 index += 1;
                 let mut class_name = "list_item";
-                if model.index_to_swap == index_to_swap as isize {
+                if model.index_to_swap == row_index as isize {
                     class_name = "list_item_selected";
                 }
                 li![
@@ -112,13 +110,13 @@ fn view(model: &Model) -> Node<Msg> {
                         span![
                             C![class_name],
                             item,
-                            ev(Ev::Click, move |_| Msg::Swap(index_to_swap))
+                            ev(Ev::Click, move |_| Msg::Swap(row_index))
                         ],
                         span![" "],
                         button![
                             C!["button"],
                             i![C!["fa fa-trash"]],
-                            ev(Ev::Click, move |_| Msg::Delete(index_to_delete))
+                            ev(Ev::Click, move |_| Msg::Delete(row_index))
                         ]
                     ],
                 ]
