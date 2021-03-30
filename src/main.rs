@@ -13,6 +13,16 @@ struct Item {
     item: String
 }
 
+#[derive(Deserialize)]
+struct Index {
+    index: usize
+}
+
+#[derive(Deserialize)]
+struct Indexes {
+    indexes: Vec<usize>
+}
+
 #[get("/api/todo")]
 async fn get_data(data: web::Data<State>) -> HttpResponse {
     HttpResponse::Ok()
@@ -46,18 +56,20 @@ async fn clear_items(data: web::Data<State>) -> HttpResponse {
 }
 
 #[post("/api/delete")]
-async fn delete_item(data: web::Data<State>, item: web::Json<Item>) -> HttpResponse {
+async fn delete_item(data: web::Data<State>, index: web::Json<Index>) -> HttpResponse {
     let mut new_state = data.todo_items.lock().unwrap();
-    let item_to_delete = item.item.to_string();
-    let mut counter = 0;
+    new_state.remove(index.index);
 
-    loop {
-        if new_state[counter] == item_to_delete {
-            new_state.remove(counter);
-            break;
-        }
-        counter += 1;
-    }
+    HttpResponse::Ok()
+        .json(new_state.clone())
+}
+
+#[post("/api/swap")]
+async fn swap_items(data: web::Data<State>, indexes: web::Json<Indexes>) -> HttpResponse {
+    let mut new_state = data.todo_items.lock().unwrap();
+    let helper = new_state[indexes.indexes[0]].clone();
+    new_state[indexes.indexes[0]] = new_state[indexes.indexes[1]].clone();
+    new_state[indexes.indexes[1]] = helper;
 
     HttpResponse::Ok()
         .json(new_state.clone())
@@ -75,6 +87,7 @@ async fn main() -> std::io::Result<()> {
             .service(save_item)
             .service(clear_items)
             .service(delete_item)
+            .service(swap_items)
             .service(fs::Files::new("/static", "./pkg").show_files_listing())
     })
     .bind("127.0.0.1:8000")?
